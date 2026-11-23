@@ -10,6 +10,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { beacon } from "./lib/beacon";
 import { useBeacon } from "./hooks/useBeacon";
+import Certificate, { type Cert } from "./Certificate";
 
 // Testnet contract. Change if you redeploy.
 const CONTRACT_ID = "CCKKQRHPWJYRUWWY3M34CNIFK4AUZK2PG3IFI4UY2GIZRZLEN4E3LLQO";
@@ -23,6 +24,35 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [isError, setIsError] = useState(false);
+  const [cert, setCert] = useState<Cert | null>(null);
+  const [lookupId, setLookupId] = useState("");
+
+  // Read-only call: simulated, nothing is signed or paid.
+  async function fetchCertificate(id: number, from: string): Promise<Cert> {
+    const source = await server.getAccount(from);
+    const tx = new TransactionBuilder(source, {
+      fee: BASE_FEE,
+      networkPassphrase: beacon.getNetwork().passphrase,
+    })
+      .addOperation(new Contract(CONTRACT_ID).call("get_certificate", nativeToScVal(id, { type: "u32" })))
+      .setTimeout(60)
+      .build();
+    const sim = await server.simulateTransaction(tx);
+    if (rpc.Api.isSimulationError(sim)) throw new Error("Certificate not found.");
+    return scValToNative(sim.result!.retval) as Cert;
+  }
+
+  async function view() {
+    if (!address) return show("Log in first.", true);
+    try {
+      show("Loading certificate…");
+      setCert(await fetchCertificate(Number(lookupId), address));
+      show("");
+    } catch (e) {
+      setCert(null);
+      show(e instanceof Error ? e.message : String(e), true);
+    }
+  }
 
   const show = (msg: string, error = false) => {
     setStatus(msg);
@@ -70,7 +100,8 @@ export default function App() {
       if (result.status !== "SUCCESS") throw new Error(`Transaction ${result.status}.`);
 
       const id = scValToNative(result.returnValue!);
-      show(`Minted certificate #${id} for "${trimmed}". Tx: ${sent.hash}`);
+      setCert(await fetchCertificate(Number(id), address));
+      show(`Minted certificate #${id}. Tx: ${sent.hash}`);
       setName("");
     } catch (e) {
       show(e instanceof Error ? e.message : String(e), true);
@@ -105,6 +136,20 @@ export default function App() {
       </button>
 
       <p className={isError ? "status err" : "status"}>{status}</p>
+
+      {cert && <Certificate cert={cert} />}
+
+      <input
+        type="number"
+        min="1"
+        placeholder="View a certificate by number"
+        value={lookupId}
+        disabled={!address}
+        onChange={(e) => setLookupId(e.target.value)}
+      />
+      <button onClick={view} disabled={!address || !lookupId}>
+        View certificate
+      </button>
     </>
   );
 }
