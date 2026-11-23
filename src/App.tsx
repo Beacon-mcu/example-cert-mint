@@ -116,7 +116,11 @@ export default function App() {
 
       {address ? (
         <>
-          <p>Connected: {address}</p>
+          <p className="addr">
+            Connected:
+            <br />
+            {address}
+          </p>
           <button onClick={logout}>Log out</button>
         </>
       ) : (
