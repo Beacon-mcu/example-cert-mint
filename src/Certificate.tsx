@@ -16,7 +16,7 @@ export default function Certificate({ cert }: { cert: Cert }) {
     <div
       style={{
         marginTop: "1.5rem",
-        padding: "2rem 1rem",
+        padding: "clamp(1rem, 5vw, 2rem) .75rem",
         border: "6px double #b08d2f",
         background: "#fffdf5",
         color: "#3a2f10",
@@ -27,7 +27,7 @@ export default function Certificate({ cert }: { cert: Cert }) {
       <div style={{ letterSpacing: ".2em", fontSize: ".8rem" }}>CERTIFICATE #{cert.id}</div>
       <h2 style={{ margin: ".6rem 0" }}>Certificate of Achievement</h2>
       <div>This is presented to</div>
-      <div style={{ fontSize: "2rem", fontStyle: "italic", margin: ".8rem 0", wordBreak: "break-word" }}>
+      <div style={{ fontSize: "clamp(1.4rem, 7vw, 2rem)", fontStyle: "italic", margin: ".8rem 0", wordBreak: "break-word" }}>
         {cert.name}
       </div>
       <div style={{ fontSize: ".85rem" }}>Issued {date}</div>
